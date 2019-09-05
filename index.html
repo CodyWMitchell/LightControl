@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<head>
+    <title>I love you!</title>
+</head>
+
+<div id="messageBox"></div>
+<form>
+<input type="text" id="textBox">
+<input type="submit">
+</form>
+
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  var socket = io();
+
+  message = document.getElementById("textBox");
+
+  var getColor = function(c) {
+		var temp = document.createElement("div");
+		var color = {r:0,g:0,b:0,a:0};
+		temp.style.color = c;
+		temp.style.display = "none";
+		document.body.appendChild(temp);
+		var style = window.getComputedStyle(temp,null).color;
+		document.body.removeChild(temp);
+
+		var recol = /([\.\d]+)/g;
+		var vals  = style.match(recol);
+		if (vals.length>2) {
+			color.r = parseInt(vals[0])||0;
+			color.g = parseInt(vals[1])||0;
+			color.b = parseInt(vals[2])||0;
+			color.a = Math.round((parseFloat(vals[3])||1.0)*255);
+		}
+		return color;
+	}
+
+  function submitMessage() {
+      var colorList = getColor(message.value);
+      colorList.r = ('000'+ colorList.r.toString()).slice(-3);
+      colorList.g = ('000'+ colorList.g.toString()).slice(-3);
+      colorList.b = ('000'+ colorList.b.toString()).slice(-3);
+      var color = colorList.r+colorList.g+colorList.b;
+      socket.emit('message',color);
+      message.innerHTML = '';
+  }
+
+  $(function () {
+    $('form').submit(function(e){
+      e.preventDefault(); // prevents page reloading
+      submitMessage();
+      return false;
+    });
+  });
+
+  socket.on('message',(msg) => {
+    console.log("message received "+msg);
+    mbox = document.getElementById("messageBox");
+    mbox.innerHTML+=msg+"</br>";
+  });
+</script>
